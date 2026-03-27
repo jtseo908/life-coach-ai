@@ -20,11 +20,20 @@ export function ParsedResultCard({ items: initialItems, onConfirm }: Props) {
       <h3 className="text-sm font-semibold text-gray-400">AI 파싱 결과 (수정 가능)</h3>
       {items.map((item, i) => (
         <div key={i} className="rounded-lg bg-gray-800 p-3 space-y-2">
-          <input
-            className="w-full bg-gray-700 rounded px-2 py-1 text-white text-sm"
-            value={item.name}
-            onChange={e => updateItem(i, 'name', e.target.value)}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="bg-gray-700 rounded px-2 py-1 text-white text-sm"
+              value={item.name}
+              onChange={e => updateItem(i, 'name', e.target.value)}
+              placeholder="종목명"
+            />
+            <input
+              className="bg-gray-700 rounded px-2 py-1 text-white text-sm font-mono"
+              value={item.ticker}
+              onChange={e => updateItem(i, 'ticker', e.target.value)}
+              placeholder="티커 (예: 005930.KS)"
+            />
+          </div>
           <div className="grid grid-cols-3 gap-2">
             <input
               type="number"

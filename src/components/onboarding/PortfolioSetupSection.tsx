@@ -13,6 +13,7 @@ export function PortfolioSetupSection({ onConfirm }: Props) {
   const [input, setInput] = useState('')
   const [parsedItems, setParsedItems] = useState<PortfolioItem[] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isConfirmed, setIsConfirmed] = useState(false)
 
   const handleParse = async () => {
     setIsLoading(true)
@@ -48,7 +49,20 @@ export function PortfolioSetupSection({ onConfirm }: Props) {
         AI로 분석하기
       </button>
       {isLoading && <LoadingSpinner />}
-      {parsedItems && <ParsedResultCard items={parsedItems} onConfirm={onConfirm} />}
+      {parsedItems && !isConfirmed && (
+        <ParsedResultCard
+          items={parsedItems}
+          onConfirm={(items) => {
+            setIsConfirmed(true)
+            onConfirm(items)
+          }}
+        />
+      )}
+      {isConfirmed && (
+        <div className="rounded-lg bg-green-900/50 border border-green-700/50 p-3 text-center text-sm text-green-400">
+          포트폴리오 등록 완료
+        </div>
+      )}
     </div>
   )
 }

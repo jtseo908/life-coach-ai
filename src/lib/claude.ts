@@ -4,6 +4,13 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 })
 
+function extractJson(text: string) {
+  // ```json ... ``` 코드블록에서 JSON 추출
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  const raw = match ? match[1].trim() : text.trim()
+  return JSON.parse(raw)
+}
+
 export async function parseCheckin(input: string) {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -47,7 +54,7 @@ export async function parseCheckin(input: string) {
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text)
+  return extractJson(text)
 }
 
 export async function parsePortfolio(input: string) {
@@ -65,8 +72,8 @@ export async function parsePortfolio(input: string) {
 {
   "items": [
     {
-      "ticker": "종목 코드 또는 이름",
-      "name": "종목 풀네임",
+      "ticker": "Yahoo Finance 티커 (한국 종목은 종목코드.KS 형식, 예: 삼성전자→005930.KS, SK하이닉스→000660.KS. 미국 종목은 그대로, 예: TSLA, AAPL)",
+      "name": "종목 풀네임 (한국어 이름)",
       "quantity": 보유수량,
       "avg_price": 평균매수가 (숫자만),
       "currency": "KRW" 또는 "USD" (원화면 KRW, 달러면 USD),
@@ -79,7 +86,7 @@ export async function parsePortfolio(input: string) {
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text)
+  return extractJson(text)
 }
 
 export async function generateCoaching(context: {
@@ -89,8 +96,9 @@ export async function generateCoaching(context: {
   recentLogs: unknown[]
   portfolio: unknown[]
 }) {
+  // 코칭은 깊은 맥락 분석이 필요하므로 Opus 사용
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-opus-4-20250514',
     max_tokens: 1024,
     messages: [
       {
@@ -126,5 +134,5 @@ ${JSON.stringify(context.portfolio, null, 2)}
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text)
+  return extractJson(text)
 }
