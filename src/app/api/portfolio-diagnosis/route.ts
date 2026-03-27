@@ -55,7 +55,13 @@ export async function POST() {
 - 세금(양도세, 배당세) 관점에서의 전략
 
 모든 분석에 구체적 수치와 비율을 포함하세요.
-추상적 조언이 아닌, 실행 가능한 구체적 전략을 제시하세요.`,
+추상적 조언이 아닌, 실행 가능한 구체적 전략을 제시하세요.
+
+## 교육적 설명 스타일
+- 전문 용어가 처음 등장할 때 괄호 안에 쉬운 설명을 추가하세요. 예: "MDD(최대 낙폭, 고점 대비 최저점까지의 하락률)"
+- 각 종목에 대해 확신도(conviction)를 high/medium/low로 표시하세요.
+- Bull Case(매수 근거)와 Bear Case(위험 요소) 양면 분석을 반드시 포함하세요.
+- 매크로 환경 분석에서 인과관계 체인(A → B → C)을 활용해 논리를 연결하세요.`,
       messages: [
         {
           role: 'user',
@@ -90,7 +96,11 @@ ${JSON.stringify(recentRes.data?.map(d => d.finance_data) || [], null, 2)}
       "ticker": "티커",
       "verdict": "hold|add|reduce|sell",
       "reasoning": "이 판단의 근거 2-3문장. 밸류에이션, 성장성, 리스크 포함.",
-      "target_weight": "포트폴리오 내 적정 비중 (%)"
+      "target_weight": "포트폴리오 내 적정 비중 (%)",
+      "conviction": "high|medium|low",
+      "bull_case": "매수 근거 2-3문장",
+      "bear_case": "위험 요소 2-3문장",
+      "educational_note": "이 종목과 관련된 투자 개념 설명 1-2문장"
     }
   ],
   "rebalancing_strategy": {
@@ -98,6 +108,8 @@ ${JSON.stringify(recentRes.data?.map(d => d.finance_data) || [], null, 2)}
     "monthly_plan": "향후 1개월 분할 매수/매도 계획",
     "new_additions": "현재 포트폴리오에 추가를 고려할 종목/ETF와 이유"
   },
+  "macro_context": "현재 매크로 환경이 포트폴리오에 미치는 영향 (인과관계 체인: A → B → C 형태로 작성)",
+  "learning_notes": ["이번 진단에서 배울 수 있는 투자 개념 1", "투자 개념 2"],
   "goal_trajectory": {
     "current_total_krw": 현재 총 자산(원화 환산) 숫자,
     "goal_analysis": "목표 대비 현재 위치와 현실적 달성 가능성 분석",

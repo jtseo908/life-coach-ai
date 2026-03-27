@@ -31,6 +31,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
   const [parsed, setParsed] = useState<ParsedCheckin | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [savingStep, setSavingStep] = useState<'idle' | 'saving' | 'analyzing' | 'coaching' | 'done'>('idle')
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
@@ -122,6 +123,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
   const handleSave = async () => {
     if (!parsed) return
     setIsSaving(true)
+    setSavingStep('saving')
     try {
       await fetch('/api/checkin', {
         method: 'POST',
@@ -133,19 +135,30 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
         }),
       })
 
+      setSavingStep('analyzing')
+      // 약간의 딜레이로 단계 전환 체감
+      await new Promise(r => setTimeout(r, 500))
+
+      setSavingStep('coaching')
       await fetch('/api/coaching', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: new Date().toISOString().split('T')[0] }),
       })
 
+      setSavingStep('done')
+      await new Promise(r => setTimeout(r, 800))
+
       setParsed(null)
       setInput('')
+      setImageFiles([])
+      setImagePreviews([])
       onCheckinComplete()
     } catch {
       alert('저장에 실패했습니다.')
     } finally {
       setIsSaving(false)
+      setSavingStep('idle')
     }
   }
 
@@ -317,9 +330,48 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
               disabled={isSaving}
               className="flex-1 rounded-xl bg-gradient-to-r from-green-600 to-green-500 shadow-[0_4px_16px_rgba(34,197,94,0.2)] py-2 text-sm font-semibold text-white hover:from-green-500 hover:to-green-400 disabled:opacity-50 transition-all"
             >
-              {isSaving ? 'AI 코칭 생성 중... (30초~1분 소요)' : '확인하고 저장하기'}
+              {!isSaving && '확인하고 저장하기'}
+              {isSaving && savingStep === 'saving' && '데이터 저장 중...'}
+              {isSaving && savingStep === 'analyzing' && '건강/재무 분석 중...'}
+              {isSaving && savingStep === 'coaching' && 'AI 코칭 생성 중...'}
+              {isSaving && savingStep === 'done' && '✓ 완료!'}
             </button>
           </div>
+
+          {/* 단계별 진행 표시 */}
+          {isSaving && (
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+              {[
+                { step: 'saving' as const, label: '데이터 저장' },
+                { step: 'analyzing' as const, label: '건강/재무 분석' },
+                { step: 'coaching' as const, label: 'AI 코칭 생성 (30초~1분)' },
+                { step: 'done' as const, label: '완료!' },
+              ].map(({ step, label }) => {
+                const steps = ['idle', 'saving', 'analyzing', 'coaching', 'done'] as const
+                const currentIdx = steps.indexOf(savingStep)
+                const stepIdx = steps.indexOf(step)
+                const isDone = stepIdx < currentIdx
+                const isActive = stepIdx === currentIdx
+
+                return (
+                  <div key={step} className="flex items-center gap-2 text-xs">
+                    {isDone && (
+                      <span className="text-green-400" style={{ animation: 'fade-in-up 0.3s ease-out' }}>✓</span>
+                    )}
+                    {isActive && (
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/10 border-t-violet-400" />
+                    )}
+                    {!isDone && !isActive && (
+                      <span className="h-3 w-3 rounded-full border border-white/10" />
+                    )}
+                    <span className={isDone ? 'text-gray-500' : isActive ? 'text-white' : 'text-gray-600'}>
+                      {label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 

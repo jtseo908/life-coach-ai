@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import type { DailyLog } from '@/types'
@@ -17,15 +17,36 @@ const TrendSection = dynamic(() => import('@/components/dashboard/TrendSection')
 export default function DashboardPage() {
   const router = useRouter()
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null)
+  const [yesterdayLog, setYesterdayLog] = useState<DailyLog | null>(null)
   const [isReady, setIsReady] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const crossInsightRef = useRef<HTMLDivElement>(null)
 
   const fetchTodayLog = useCallback(async () => {
-    const res = await fetch('/api/history?days=1')
+    const res = await fetch('/api/history?days=2')
     const data = await res.json()
-    const today = new Date().toISOString().split('T')[0]
-    const log = Array.isArray(data) ? data.find((d: DailyLog) => d.date === today) : null
-    setTodayLog(log || null)
+    const todayStr = new Date().toISOString().split('T')[0]
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+
+    if (Array.isArray(data)) {
+      setTodayLog(data.find((d: DailyLog) => d.date === todayStr) || null)
+      setYesterdayLog(data.find((d: DailyLog) => d.date === yesterdayStr) || null)
+    } else {
+      setTodayLog(null)
+      setYesterdayLog(null)
+    }
   }, [])
+
+  const handleCheckinComplete = useCallback(async () => {
+    await fetchTodayLog()
+    // 크로스 인사이트로 스크롤
+    setTimeout(() => {
+      crossInsightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 300)
+    // 토스트 표시
+    setToast('AI 코칭이 생성되었습니다! 크로스 인사이트를 확인하세요.')
+    setTimeout(() => setToast(null), 4000)
+  }, [fetchTodayLog])
 
   useEffect(() => {
     const init = async () => {
@@ -95,11 +116,11 @@ export default function DashboardPage() {
           </header>
 
           {/* 점수 히어로 (전체 너비) */}
-          <ScoreSection todayLog={todayLog} />
+          <ScoreSection todayLog={todayLog} yesterdayLog={yesterdayLog} crossInsightRef={crossInsightRef} />
 
           {/* 2컬럼 그리드 (데스크톱) / 세로 스택 (모바일) */}
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <DailyCheckinSection onCheckinComplete={fetchTodayLog} todayLog={todayLog} />
+            <DailyCheckinSection onCheckinComplete={handleCheckinComplete} todayLog={todayLog} />
             <PortfolioSection />
           </div>
 
@@ -114,6 +135,15 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      {/* 토스트 */}
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-violet-400/20 bg-[#0f0a1a]/90 px-5 py-3 text-sm text-violet-200 shadow-[0_0_30px_rgba(167,139,250,0.15)] backdrop-blur-xl"
+          style={{ animation: 'fade-in-up 0.4s ease-out' }}
+        >
+          ✦ {toast}
+        </div>
+      )}
     </SoftAurora>
   )
 }

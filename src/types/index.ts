@@ -158,6 +158,9 @@ export type Settings = {
   activity_level?: string | null
 }
 
+// === 포트폴리오 진단 종목별 확장 필드 ===
+export type StockConviction = 'high' | 'medium' | 'low'
+
 export type ParseRequest = {
   type: 'checkin' | 'portfolio'
   input: string

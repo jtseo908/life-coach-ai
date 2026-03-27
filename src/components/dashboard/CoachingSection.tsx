@@ -20,6 +20,14 @@ function parseCoachingSection(text: string, separator: string) {
     } else if (line.startsWith('🔬 근거:') || line.startsWith('⚠️ 리스크:')) {
       currentKey = 'mechanism'
       result[currentKey] = line.replace(/^🔬 근거:\s*|^⚠️ 리스크:\s*/, '')
+    } else if (line.startsWith('📊 확신도:')) {
+      result.conviction = line.replace('📊 확신도: ', '').trim().toLowerCase()
+    } else if (line.startsWith('🔄 반대 논거:')) {
+      result.counter_argument = line.replace('🔄 반대 논거: ', '').trim()
+    } else if (line.startsWith('🔗 인과관계:')) {
+      result.causal_chain = line.replace('🔗 인과관계: ', '').trim()
+    } else if (line.startsWith('💡 오늘의 투자 지식:')) {
+      result.daily_knowledge = line.replace('💡 오늘의 투자 지식: ', '').trim()
     } else if (line.startsWith('💪 ') || line.startsWith('💰 ')) {
       result.summary = line.replace(/^💪\s*|^💰\s*/, '')
     } else {
@@ -179,12 +187,53 @@ export function CoachingSection({ todayLog }: Props) {
         {/* 근거/리스크 */}
         {data.mechanism && (
           <div
-            className="opacity-0"
+            className="mb-4 opacity-0"
             style={{ animation: 'slide-in 0.3s ease-out 0.24s forwards' }}
           >
             <p className="text-xs leading-relaxed text-gray-500 italic">
               {tab.mechanismPrefix} {data.mechanism}
             </p>
+          </div>
+        )}
+
+        {/* 재무 코칭 전용: Stock Skills 강화 필드 */}
+        {activeTab === 1 && (
+          <div className="space-y-3 opacity-0" style={{ animation: 'slide-in 0.3s ease-out 0.32s forwards' }}>
+            {/* 인과관계 체인 */}
+            {data.causal_chain && (
+              <div className="flex items-start gap-2 rounded-xl bg-blue-500/[0.04] border border-blue-500/[0.08] p-3">
+                <span className="text-xs shrink-0">🔗</span>
+                <p className="text-xs leading-relaxed text-blue-300">{data.causal_chain}</p>
+              </div>
+            )}
+
+            {/* 확신도 + 반대 논거 */}
+            {(data.conviction || data.counter_argument) && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+                {data.conviction && (
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                    data.conviction === 'high' ? 'border-green-500/20 bg-green-500/[0.08] text-green-400' :
+                    data.conviction === 'medium' ? 'border-yellow-400/20 bg-yellow-400/[0.08] text-yellow-400' :
+                    'border-red-400/20 bg-red-400/[0.08] text-red-400'
+                  }`}>
+                    📊 확신도: {data.conviction.toUpperCase()}
+                  </span>
+                )}
+                {data.counter_argument && (
+                  <p className="text-[11px] leading-relaxed text-gray-500 italic">
+                    🔄 {data.counter_argument}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 오늘의 투자 한줄 지식 */}
+            {data.daily_knowledge && (
+              <div className="rounded-xl border border-violet-400/15 bg-violet-500/[0.04] p-3">
+                <div className="text-[10px] font-semibold text-violet-400 tracking-wide mb-1">💡 오늘의 투자 지식</div>
+                <p className="text-sm leading-relaxed text-gray-300">{data.daily_knowledge}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

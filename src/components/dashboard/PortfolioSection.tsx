@@ -12,6 +12,10 @@ type StockVerdict = {
   verdict: 'hold' | 'add' | 'reduce' | 'sell'
   reasoning: string
   target_weight: string
+  conviction?: 'high' | 'medium' | 'low'
+  bull_case?: string
+  bear_case?: string
+  educational_note?: string
 }
 
 type Diagnosis = {
@@ -28,6 +32,8 @@ type Diagnosis = {
     ideal_allocation: string
   }
   individual_stocks: StockVerdict[]
+  macro_context?: string
+  learning_notes?: string[]
   rebalancing_strategy: {
     priority_actions: string
     monthly_plan: string
@@ -63,6 +69,18 @@ const GRADE_COLORS: Record<string, string> = {
   F: 'text-red-400',
 }
 
+const CONVICTION_STYLES = {
+  high: 'bg-green-400/[0.08] border border-green-400/[0.15] text-green-400',
+  medium: 'bg-yellow-400/[0.08] border border-yellow-400/[0.15] text-yellow-400',
+  low: 'bg-red-400/[0.08] border border-red-400/[0.15] text-red-400',
+} as const
+
+const CONVICTION_LABELS = {
+  high: '확신 높음',
+  medium: '확신 보통',
+  low: '확신 낮음',
+} as const
+
 const GRADE_GLOW_COLORS: Record<string, 'health' | 'wealth' | 'ai'> = {
   A: 'health',
   B: 'health',
@@ -79,6 +97,8 @@ export function PortfolioSection() {
   const [isSaving, setIsSaving] = useState(false)
   const [isDiagnosing, setIsDiagnosing] = useState(false)
   const [diagnosis, setDiagnosis] = useState<Diagnosis | null>(null)
+  const [bullBearTab, setBullBearTab] = useState<Record<number, 'bull' | 'bear'>>({})
+  const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({})
 
   const fetchPortfolio = () => {
     fetch('/api/portfolio')
@@ -307,6 +327,21 @@ export function PortfolioSection() {
             </div>
           </BorderGlow>
 
+          {/* 매크로 환경 인과관계 */}
+          {diagnosis.macro_context && (
+            <GlassCard>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🌐</span>
+                  <h3 className="text-sm font-bold text-blue-400">매크로 환경 분석</h3>
+                </div>
+                <div className="rounded-xl bg-blue-400/[0.04] border border-blue-400/[0.08] p-3">
+                  <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">{diagnosis.macro_context}</p>
+                </div>
+              </div>
+            </GlassCard>
+          )}
+
           {/* 리스크 분석 */}
           <GlassCard>
             <div className="space-y-2">
@@ -332,20 +367,82 @@ export function PortfolioSection() {
           <GlassCard>
             <div className="space-y-2">
               <h3 className="text-sm font-bold text-blue-400">종목별 판정</h3>
-              {diagnosis.individual_stocks.map((stock, i) => (
-                <div key={i} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-3 hover:border-white/[0.08] transition-colors">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-white">{stock.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">적정 {stock.target_weight}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${VERDICT_STYLES[stock.verdict]}`}>
-                        {VERDICT_LABELS[stock.verdict]}
-                      </span>
+              {diagnosis.individual_stocks.map((stock, i) => {
+                const currentTab = bullBearTab[i] || 'bull'
+                const isNoteExpanded = expandedNotes[i] || false
+                return (
+                  <div key={i} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-3 hover:border-white/[0.08] transition-colors">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold text-white">{stock.name}</span>
+                      <div className="flex items-center gap-2">
+                        {stock.conviction && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${CONVICTION_STYLES[stock.conviction]}`}>
+                            {CONVICTION_LABELS[stock.conviction]}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-500">적정 {stock.target_weight}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${VERDICT_STYLES[stock.verdict]}`}>
+                          {VERDICT_LABELS[stock.verdict]}
+                        </span>
+                      </div>
                     </div>
+                    <p className="text-xs text-gray-400 mb-2">{stock.reasoning}</p>
+
+                    {/* Bull / Bear 토글 */}
+                    {(stock.bull_case || stock.bear_case) && (
+                      <div className="mt-2">
+                        <div className="flex gap-1 mb-2">
+                          <button
+                            onClick={() => setBullBearTab(prev => ({ ...prev, [i]: 'bull' }))}
+                            className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold transition-all duration-200 ${
+                              currentTab === 'bull'
+                                ? 'bg-green-400/[0.12] text-green-400 shadow-[0_0_12px_rgba(74,222,128,0.15)]'
+                                : 'text-gray-500 hover:text-gray-400'
+                            }`}
+                          >
+                            Bull Case
+                          </button>
+                          <button
+                            onClick={() => setBullBearTab(prev => ({ ...prev, [i]: 'bear' }))}
+                            className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold transition-all duration-200 ${
+                              currentTab === 'bear'
+                                ? 'bg-red-400/[0.12] text-red-400 shadow-[0_0_12px_rgba(248,113,113,0.15)]'
+                                : 'text-gray-500 hover:text-gray-400'
+                            }`}
+                          >
+                            Bear Case
+                          </button>
+                        </div>
+                        <div className={`rounded-lg p-2.5 text-xs leading-relaxed ${
+                          currentTab === 'bull'
+                            ? 'bg-green-400/[0.04] border border-green-400/[0.08] text-green-300/80'
+                            : 'bg-red-400/[0.04] border border-red-400/[0.08] text-red-300/80'
+                        }`}>
+                          {currentTab === 'bull' ? stock.bull_case : stock.bear_case}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 배우기 접이식 */}
+                    {stock.educational_note && (
+                      <div className="mt-2">
+                        <button
+                          onClick={() => setExpandedNotes(prev => ({ ...prev, [i]: !prev[i] }))}
+                          className="flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300 transition-colors"
+                        >
+                          <span>{isNoteExpanded ? '▾' : '▸'}</span>
+                          <span>배우기</span>
+                        </button>
+                        {isNoteExpanded && (
+                          <div className="mt-1.5 rounded-lg bg-violet-400/[0.04] border border-violet-400/[0.08] p-2.5 text-xs text-violet-300/80 leading-relaxed">
+                            {stock.educational_note}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">{stock.reasoning}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </GlassCard>
 
@@ -385,6 +482,26 @@ export function PortfolioSection() {
               </div>
             </div>
           </BorderGlow>
+
+          {/* 오늘 배운 투자 개념 */}
+          {diagnosis.learning_notes && diagnosis.learning_notes.length > 0 && (
+            <GlassCard>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">📚</span>
+                  <h3 className="text-sm font-bold text-violet-300">오늘 배운 투자 개념</h3>
+                </div>
+                <div className="space-y-1.5">
+                  {diagnosis.learning_notes.map((note, i) => (
+                    <div key={i} className="flex items-start gap-2 rounded-lg bg-violet-400/[0.04] border border-violet-400/[0.08] p-2.5">
+                      <span className="text-violet-400 text-xs mt-0.5 shrink-0">{i + 1}.</span>
+                      <p className="text-xs text-gray-300 leading-relaxed">{note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </GlassCard>
+          )}
 
           {/* 닫기 */}
           <button

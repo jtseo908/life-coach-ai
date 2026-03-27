@@ -49,7 +49,12 @@ export async function POST(request: Request) {
       `💡 액션: ${coaching.finance_coaching.action}`,
       '',
       `⚠️ 리스크: ${coaching.finance_coaching.risk_note}`,
-    ].join('\n')
+      '',
+      coaching.finance_coaching.conviction ? `📊 확신도: ${coaching.finance_coaching.conviction}` : '',
+      coaching.finance_coaching.counter_argument ? `🔄 반대 논거: ${coaching.finance_coaching.counter_argument}` : '',
+      coaching.finance_coaching.causal_chain ? `🔗 인과관계: ${coaching.finance_coaching.causal_chain}` : '',
+      coaching.finance_coaching.daily_knowledge ? `💡 오늘의 투자 지식: ${coaching.finance_coaching.daily_knowledge}` : '',
+    ].filter(Boolean).join('\n')
 
     const crossText = [
       coaching.cross_insight.connection,
