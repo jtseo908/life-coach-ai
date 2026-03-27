@@ -83,6 +83,7 @@ export type HealthData = {
   sleep_detail?: SleepDetail
   health_score: number
   score_breakdown?: HealthScoreBreakdown
+  nutrition_analysis?: NutritionAnalysis
 }
 
 export type Trade = {
@@ -121,10 +122,40 @@ export type DailyLog = {
   created_at?: string
 }
 
+// === 영양 분석 (이미지 기반) ===
+export type NutritionAnalysis = {
+  detected_foods: string[]
+  estimated_calories: number | null
+  protein_grams: number | null
+  carbs_grams: number | null
+  fat_grams: number | null
+  fiber_grams: number | null
+  sodium_mg: number | null
+  analysis: string
+  daily_ratio?: {
+    calories_pct: number | null
+    protein_pct: number | null
+  }
+}
+
 export type Settings = {
   id?: string
   health_goal: string
   finance_goal: string
+  // 신체 정보 (모두 선택적)
+  gender?: string | null
+  age?: number | null
+  height?: number | null
+  weight?: number | null
+  skeletal_muscle_mass?: number | null
+  body_fat_mass?: number | null
+  body_fat_pct?: number | null
+  bmi?: number | null
+  bmr?: number | null
+  weight_control?: number | null
+  fat_control?: number | null
+  muscle_control?: number | null
+  activity_level?: string | null
 }
 
 export type ParseRequest = {

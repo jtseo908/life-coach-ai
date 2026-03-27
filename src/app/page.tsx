@@ -67,7 +67,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <DailyCheckinSection onCheckinComplete={fetchTodayLog} />
+        <DailyCheckinSection onCheckinComplete={fetchTodayLog} todayLog={todayLog} />
         <ScoreSection todayLog={todayLog} />
         <CoachingSection todayLog={todayLog} />
         <PortfolioSection />

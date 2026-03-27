@@ -10,7 +10,39 @@ function extractJson(text: string) {
   return JSON.parse(raw)
 }
 
-export async function parseCheckin(input: string) {
+export async function parseCheckin(input: string, options?: { imageBase64?: string; imageMediaType?: string; bodyProfile?: Record<string, unknown>; existingData?: Record<string, unknown> }) {
+  // 멀티모달 메시지 구성
+  const contentParts: Anthropic.ContentBlockParam[] = []
+
+  // 이미지가 있으면 먼저 추가
+  if (options?.imageBase64) {
+    contentParts.push({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: (options.imageMediaType || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+        data: options.imageBase64,
+      },
+    })
+  }
+
+  // 신체 프로필 컨텍스트
+  // 기존 데이터 컨텍스트 (하루 누적용)
+  const existingContext = options?.existingData
+    ? `\n\n## 오늘 이미 입력된 데이터 (이 데이터와 병합해주세요)
+${JSON.stringify(options.existingData, null, 2)}
+- 새 입력에 없는 항목은 기존 값을 유지하세요.
+- 새 입력에 있는 항목은 기존 값을 업데이트하세요.
+- 식단이 추가 입력되면 기존 식단과 합산하세요 (예: 아침 닭가슴살 + 점심 샐러드 = 둘 다 반영).
+- 점수는 병합된 전체 하루 데이터를 기반으로 다시 계산하세요.`
+    : ''
+
+  const bodyContext = options?.bodyProfile
+    ? `\n\n## 사용자 신체 정보 (영양 분석에 활용)
+${JSON.stringify(options.bodyProfile, null, 2)}
+- 이 정보를 바탕으로 일일 필요 칼로리와 영양소 권장량 대비 섭취 비율을 계산해주세요.`
+    : ''
+
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2048,
@@ -26,9 +58,11 @@ export async function parseCheckin(input: string) {
     messages: [
       {
         role: 'user',
-        content: `다음 텍스트에서 건강 데이터와 투자 데이터를 추출하고, 전문가 수준으로 점수를 매겨줘.
-
-텍스트: "${input}"
+        content: [...contentParts, {
+          type: 'text' as const,
+          text: `다음 텍스트에서 건강 데이터와 투자 데이터를 추출하고, 전문가 수준으로 점수를 매겨줘.
+${options?.imageBase64 ? '\n첨부된 이미지는 식품 성분표 또는 음식 사진입니다. 이미지에서 영양소 정보를 추출하여 nutrition_analysis 필드에 포함해주세요.' : ''}
+텍스트: "${input}"${existingContext}${bodyContext}
 
 ## 운동 점수 루브릭 (0-35점):
 - 30-35: 목표 부합 고강도 훈련 45분+ (근력+유산소 병행, 인터벌 트레이닝, 웨이트+러닝 조합 등)
@@ -102,7 +136,21 @@ export async function parseCheckin(input: string) {
   }
 }
 
-매매 정보가 없으면 trades는 빈 배열 [].`,
+매매 정보가 없으면 trades는 빈 배열 [].
+
+이미지가 첨부된 경우에만 health 객체 안에 아래 필드를 추가:
+"nutrition_analysis": {
+  "detected_foods": ["감지된 식품 목록"],
+  "estimated_calories": 추정 칼로리 숫자 또는 null,
+  "protein_grams": 단백질(g) 또는 null,
+  "carbs_grams": 탄수화물(g) 또는 null,
+  "fat_grams": 지방(g) 또는 null,
+  "fiber_grams": 식이섬유(g) 또는 null,
+  "sodium_mg": 나트륨(mg) 또는 null,
+  "analysis": "영양 전문가 관점 한줄 평가"
+}
+이미지가 없으면 nutrition_analysis 필드를 생략.`
+        }],
       },
     ],
   })
