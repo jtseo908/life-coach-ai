@@ -34,21 +34,28 @@ export function PortfolioSetupSection({ onConfirm }: Props) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-white">포트폴리오 등록</h2>
+      <div>
+        <h2 className="text-lg font-bold text-white">포트폴리오를 알려주세요</h2>
+        <p className="mt-1 text-xs text-gray-500">보유 종목을 자유롭게 입력하면 AI가 자동으로 파싱합니다.</p>
+      </div>
+
       <textarea
-        className="w-full rounded-lg bg-gray-800 px-4 py-3 text-white placeholder-gray-500 min-h-[100px]"
+        className="min-h-[100px] w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-gray-600 backdrop-blur-sm transition-colors focus:border-blue-500/30 focus:outline-none"
         placeholder="예: 삼성전자 100주 평단 7만원, 테슬라 5주 평단 250달러"
         value={input}
         onChange={e => setInput(e.target.value)}
       />
+
       <button
         onClick={handleParse}
         disabled={!input.trim() || isLoading}
-        className="w-full rounded-lg bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+        className="w-full rounded-xl border border-violet-400/30 bg-gradient-to-r from-violet-500/20 to-blue-500/20 py-2.5 text-sm font-semibold text-violet-300 transition-all hover:from-violet-500/30 hover:to-blue-500/30 disabled:opacity-50"
       >
-        AI로 분석하기
+        ✦ AI로 분석하기
       </button>
+
       {isLoading && <LoadingSpinner />}
+
       {parsedItems && !isConfirmed && (
         <ParsedResultCard
           items={parsedItems}
@@ -58,9 +65,10 @@ export function PortfolioSetupSection({ onConfirm }: Props) {
           }}
         />
       )}
+
       {isConfirmed && (
-        <div className="rounded-lg bg-green-900/50 border border-green-700/50 p-3 text-center text-sm text-green-400">
-          포트폴리오 등록 완료
+        <div className="rounded-xl border border-green-500/20 bg-green-500/[0.06] p-3 text-center text-sm text-green-400">
+          ✓ 포트폴리오 등록 완료
         </div>
       )}
     </div>

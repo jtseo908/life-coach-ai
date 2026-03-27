@@ -1,4 +1,8 @@
+'use client'
+
+import { useState } from 'react'
 import type { DailyLog } from '@/types'
+import GlassCard from '@/components/ui/GlassCard'
 
 type Props = {
   todayLog: DailyLog | null
@@ -29,129 +33,161 @@ function parseCoachingSection(text: string, separator: string) {
   return result
 }
 
-function parseCrossInsight(text: string) {
-  const lines = text.split('\n').filter(l => l.trim())
-  const result = { connection: '', research: '', advice: '' }
-  let current = 'connection'
-
-  for (const line of lines) {
-    if (line.startsWith('📚 ')) {
-      current = 'research'
-      result.research = line.replace('📚 ', '')
-    } else if (line.startsWith('✅ ')) {
-      current = 'advice'
-      result.advice = line.replace('✅ ', '')
-    } else {
-      if (current === 'connection') {
-        result.connection += (result.connection ? ' ' : '') + line
-      }
-    }
-  }
-  return result
-}
+const TABS = [
+  {
+    key: 'health',
+    label: '건강 코칭',
+    color: '#22c55e',
+    glowColor: 'rgba(34,197,94,0.4)',
+    bgGlow: 'rgba(34,197,94,0.03)',
+    textClass: 'text-green-300',
+    protocolBg: 'bg-green-500/[0.06] border-green-500/[0.1]',
+    protocolLabel: '📋 내일의 처방',
+    protocolLabelClass: 'text-green-400',
+    mechanismPrefix: '🔬',
+  },
+  {
+    key: 'finance',
+    label: '재무 코칭',
+    color: '#3b82f6',
+    glowColor: 'rgba(59,130,246,0.4)',
+    bgGlow: 'rgba(59,130,246,0.03)',
+    textClass: 'text-blue-300',
+    protocolBg: 'bg-blue-500/[0.06] border-blue-500/[0.1]',
+    protocolLabel: '💡 액션',
+    protocolLabelClass: 'text-blue-400',
+    mechanismPrefix: '⚠️',
+  },
+] as const
 
 export function CoachingSection({ todayLog }: Props) {
+  const [activeTab, setActiveTab] = useState(0)
   const coaching = todayLog?.ai_coaching
-  const insight = todayLog?.cross_insight
 
-  if (!coaching && !insight) {
+  if (!coaching) {
     return (
-      <section className="rounded-xl bg-gray-900 p-4">
-        <h2 className="text-lg font-bold text-yellow-400 mb-2">AI 코칭</h2>
-        <p className="text-sm text-gray-500">오늘의 체크인을 완료하면 AI 코칭이 표시됩니다</p>
-      </section>
+      <GlassCard>
+        <h2 className="text-lg font-bold text-white/90 mb-2">AI 코칭</h2>
+        <p className="text-sm text-gray-500">
+          오늘의 체크인을 완료하면 AI 코칭이 표시됩니다
+        </p>
+      </GlassCard>
     )
   }
 
-  // 구조화된 포맷인지 확인 (--- 구분자가 있으면 새 포맷)
-  const isStructured = coaching?.includes('---')
+  const isStructured = coaching.includes('---')
 
   if (!isStructured) {
-    // 이전 포맷 호환
     return (
-      <section className="space-y-3">
-        {coaching && (
-          <div className="rounded-xl bg-gray-900 p-4">
-            <h2 className="text-lg font-bold text-yellow-400 mb-2">AI 코칭</h2>
-            <p className="text-sm text-gray-300 whitespace-pre-line">{coaching}</p>
-          </div>
-        )}
-        {insight && (
-          <div className="rounded-xl bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-700/50 p-4">
-            <h2 className="text-lg font-bold text-purple-300 mb-2">크로스 인사이트</h2>
-            <p className="text-sm text-gray-300 whitespace-pre-line">{insight}</p>
-          </div>
-        )}
-      </section>
+      <GlassCard>
+        <h2 className="text-lg font-bold text-white/90 mb-2">AI 코칭</h2>
+        <p className="text-sm text-gray-300 whitespace-pre-line">{coaching}</p>
+      </GlassCard>
     )
   }
 
-  const [healthPart, financePart] = (coaching || '').split('---').map(s => s.trim())
-  const health = parseCoachingSection(healthPart, '💪')
-  const finance = parseCoachingSection(financePart, '💰')
-  const cross = insight ? parseCrossInsight(insight) : null
+  const [healthPart, financePart] = coaching.split('---').map(s => s.trim())
+  const sections = [
+    parseCoachingSection(healthPart, '💪'),
+    parseCoachingSection(financePart, '💰'),
+  ]
+
+  const tab = TABS[activeTab]
+  const data = sections[activeTab]
 
   return (
-    <section className="space-y-3">
-      {/* 건강 코칭 */}
-      <div className="rounded-xl bg-gray-900 p-4 space-y-3">
-        <h2 className="text-lg font-bold text-green-400">건강 코칭</h2>
-        {health.summary && (
-          <p className="text-sm font-semibold text-green-300">{health.summary}</p>
-        )}
-        {health.analysis && (
-          <p className="text-sm text-gray-300">{health.analysis}</p>
-        )}
-        {health.protocol && (
-          <div className="rounded-lg bg-green-900/30 border border-green-800/50 p-3">
-            <div className="text-xs font-semibold text-green-400 mb-1">📋 내일의 처방</div>
-            <p className="text-sm text-gray-200">{health.protocol}</p>
-          </div>
-        )}
-        {health.mechanism && (
-          <p className="text-xs text-gray-500 italic">🔬 {health.mechanism}</p>
-        )}
+    <div className="space-y-0">
+      {/* 글로우 탭 바 */}
+      <div className="flex gap-1 rounded-t-2xl border border-b-0 border-white/[0.06] bg-white/[0.02] p-1.5 backdrop-blur-xl">
+        {TABS.map((t, i) => {
+          const isActive = i === activeTab
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(i)}
+              className="relative flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-300"
+              style={
+                isActive
+                  ? {
+                      background: `linear-gradient(135deg, ${t.bgGlow}, transparent)`,
+                      color: t.color,
+                      boxShadow: `0 0 20px ${t.glowColor}, inset 0 1px 0 rgba(255,255,255,0.06)`,
+                    }
+                  : { color: '#64748b' }
+              }
+            >
+              {/* 활성 탭 상단 글로우 라인 */}
+              {isActive && (
+                <div
+                  className="absolute inset-x-4 top-0 h-[2px] rounded-full"
+                  style={{
+                    background: `linear-gradient(90deg, transparent, ${t.color}, transparent)`,
+                    boxShadow: `0 0 8px ${t.glowColor}`,
+                  }}
+                />
+              )}
+              {t.label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* 재무 코칭 */}
-      <div className="rounded-xl bg-gray-900 p-4 space-y-3">
-        <h2 className="text-lg font-bold text-blue-400">재무 코칭</h2>
-        {finance.summary && (
-          <p className="text-sm font-semibold text-blue-300">{finance.summary}</p>
-        )}
-        {finance.analysis && (
-          <p className="text-sm text-gray-300">{finance.analysis}</p>
-        )}
-        {finance.protocol && (
-          <div className="rounded-lg bg-blue-900/30 border border-blue-800/50 p-3">
-            <div className="text-xs font-semibold text-blue-400 mb-1">💡 액션</div>
-            <p className="text-sm text-gray-200">{finance.protocol}</p>
+      {/* 코칭 콘텐츠 */}
+      <div
+        className="rounded-b-2xl border border-t-0 border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-xl lg:p-6"
+        style={{
+          background: `linear-gradient(180deg, ${tab.bgGlow} 0%, rgba(255,255,255,0.03) 30%)`,
+        }}
+      >
+        {/* 요약 */}
+        {data.summary && (
+          <div
+            className="mb-4 opacity-0"
+            style={{ animation: 'slide-in 0.3s ease-out 0s forwards' }}
+          >
+            <p className={`text-base font-semibold leading-relaxed ${tab.textClass}`}>
+              {data.summary}
+            </p>
           </div>
         )}
-        {finance.mechanism && (
-          <div className="rounded-lg bg-amber-900/20 border border-amber-800/30 p-2">
-            <p className="text-xs text-amber-300">⚠️ {finance.mechanism}</p>
-          </div>
-        )}
-      </div>
 
-      {/* 크로스 인사이트 */}
-      {cross && (
-        <div className="rounded-xl bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-700/50 p-4 space-y-2">
-          <h2 className="text-lg font-bold text-purple-300">크로스 인사이트</h2>
-          {cross.connection && (
-            <p className="text-sm text-gray-300">{cross.connection}</p>
-          )}
-          {cross.research && (
-            <p className="text-xs text-gray-400 italic">📚 {cross.research}</p>
-          )}
-          {cross.advice && (
-            <div className="rounded-lg bg-purple-900/30 border border-purple-700/30 p-2">
-              <p className="text-sm text-purple-200">✅ {cross.advice}</p>
+        {/* 분석 */}
+        {data.analysis && (
+          <div
+            className="mb-4 opacity-0"
+            style={{ animation: 'slide-in 0.3s ease-out 0.08s forwards' }}
+          >
+            <p className="text-sm leading-relaxed text-gray-300">{data.analysis}</p>
+          </div>
+        )}
+
+        {/* 처방/액션 카드 */}
+        {data.protocol && (
+          <div
+            className="mb-4 opacity-0"
+            style={{ animation: 'slide-in 0.3s ease-out 0.16s forwards' }}
+          >
+            <div className={`rounded-xl border p-4 ${tab.protocolBg}`}>
+              <div className={`mb-2 text-xs font-bold ${tab.protocolLabelClass}`}>
+                {tab.protocolLabel}
+              </div>
+              <p className="text-sm leading-relaxed text-gray-200">{data.protocol}</p>
             </div>
-          )}
-        </div>
-      )}
-    </section>
+          </div>
+        )}
+
+        {/* 근거/리스크 */}
+        {data.mechanism && (
+          <div
+            className="opacity-0"
+            style={{ animation: 'slide-in 0.3s ease-out 0.24s forwards' }}
+          >
+            <p className="text-xs leading-relaxed text-gray-500 italic">
+              {tab.mechanismPrefix} {data.mechanism}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

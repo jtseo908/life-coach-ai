@@ -2,17 +2,28 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import SoftAurora from '@/components/ui/SoftAurora'
+import GlassCard from '@/components/ui/GlassCard'
+import ShinyText from '@/components/ui/ShinyText'
+import StepIndicator from '@/components/onboarding/StepIndicator'
 import { GoalSettingSection } from '@/components/onboarding/GoalSettingSection'
-import { PortfolioSetupSection } from '@/components/onboarding/PortfolioSetupSection'
 import { BodyProfileSection } from '@/components/onboarding/BodyProfileSection'
+import { PortfolioSetupSection } from '@/components/onboarding/PortfolioSetupSection'
 import type { PortfolioItem } from '@/types'
+
+const STEPS = [
+  { label: '목표', color: '#22c55e', glowColor: 'rgba(34,197,94,0.2)' },
+  { label: '신체정보', color: '#a78bfa', glowColor: 'rgba(167,139,250,0.2)' },
+  { label: '포트폴리오', color: '#3b82f6', glowColor: 'rgba(59,130,246,0.2)' },
+]
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const [currentStep, setCurrentStep] = useState(0)
   const [healthGoal, setHealthGoal] = useState('')
   const [financeGoal, setFinanceGoal] = useState('')
-  const [portfolioReady, setPortfolioReady] = useState(false)
   const [bodyProfile, setBodyProfile] = useState<Record<string, unknown> | null>(null)
+  const [portfolioReady, setPortfolioReady] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handlePortfolioConfirm = async (items: PortfolioItem[]) => {
@@ -26,17 +37,16 @@ export default function OnboardingPage() {
 
   const handleBodyProfileSave = (profile: Record<string, unknown>) => {
     setBodyProfile(profile)
+    setCurrentStep(2)
   }
 
   const handleBodyProfileSkip = () => {
     setBodyProfile({})
+    setCurrentStep(2)
   }
 
   const handleComplete = async () => {
-    if (!healthGoal.trim() || !financeGoal.trim()) {
-      alert('건강 목표와 재무 목표를 모두 입력해주세요.')
-      return
-    }
+    if (!healthGoal.trim() || !financeGoal.trim()) return
     setIsSubmitting(true)
     await fetch('/api/settings', {
       method: 'PUT',
@@ -50,44 +60,100 @@ export default function OnboardingPage() {
     router.push('/')
   }
 
-  const isBodyProfileDone = bodyProfile !== null
+  const canGoNext = () => {
+    if (currentStep === 0) return healthGoal.trim() !== '' && financeGoal.trim() !== ''
+    if (currentStep === 1) return true // 신체정보는 건너뛰기 가능
+    if (currentStep === 2) return portfolioReady
+    return false
+  }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
-      <div className="mx-auto max-w-lg px-4 py-8 space-y-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">건강-재무 코치</h1>
-          <p className="mt-2 text-gray-400">시작하기 전에 목표와 포트폴리오를 설정해주세요</p>
-        </div>
-
-        <GoalSettingSection
-          healthGoal={healthGoal}
-          financeGoal={financeGoal}
-          onHealthGoalChange={setHealthGoal}
-          onFinanceGoalChange={setFinanceGoal}
-        />
-
-        <PortfolioSetupSection onConfirm={handlePortfolioConfirm} />
-
-        <BodyProfileSection
-          onSave={handleBodyProfileSave}
-          onSkip={handleBodyProfileSkip}
-        />
-
-        {isBodyProfileDone && (
-          <div className="rounded-lg bg-green-900/50 border border-green-700/50 p-3 text-center text-sm text-green-400">
-            신체 정보 {Object.keys(bodyProfile).length > 0 ? '저장 완료' : '건너뛰기 완료'}
+    <SoftAurora>
+      <main className="min-h-screen">
+        <div className="mx-auto max-w-xl px-4 py-8">
+          {/* 헤더 */}
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-black tracking-wide">
+              <span
+                style={{
+                  background: 'linear-gradient(180deg, #22c55e, #3b82f6)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 16px rgba(34,197,94,0.2))',
+                }}
+              >
+                V
+              </span>
+              <ShinyText className="text-gray-100">PULSE</ShinyText>
+            </h1>
           </div>
-        )}
 
-        <button
-          onClick={handleComplete}
-          disabled={!healthGoal.trim() || !financeGoal.trim() || !portfolioReady || !isBodyProfileDone || isSubmitting}
-          className="w-full rounded-lg bg-green-600 py-3 text-lg font-bold text-white hover:bg-green-700 disabled:opacity-50"
-        >
-          시작하기
-        </button>
-      </div>
-    </main>
+          {/* 스텝 인디케이터 */}
+          <div className="mb-8">
+            <StepIndicator currentStep={currentStep} steps={STEPS} />
+          </div>
+
+          {/* 스텝 콘텐츠 */}
+          <GlassCard
+            accentColor={
+              currentStep === 0 ? 'health' : currentStep === 1 ? 'ai' : 'wealth'
+            }
+            className="transition-all duration-500"
+          >
+            {currentStep === 0 && (
+              <GoalSettingSection
+                healthGoal={healthGoal}
+                financeGoal={financeGoal}
+                onHealthGoalChange={setHealthGoal}
+                onFinanceGoalChange={setFinanceGoal}
+              />
+            )}
+
+            {currentStep === 1 && (
+              <BodyProfileSection
+                onSave={handleBodyProfileSave}
+                onSkip={handleBodyProfileSkip}
+              />
+            )}
+
+            {currentStep === 2 && (
+              <PortfolioSetupSection onConfirm={handlePortfolioConfirm} />
+            )}
+          </GlassCard>
+
+          {/* 네비게이션 버튼 */}
+          <div className="mt-6 flex gap-3">
+            {currentStep > 0 && (
+              <button
+                onClick={() => setCurrentStep(prev => prev - 1)}
+                className="rounded-xl border border-white/10 px-5 py-3 text-sm text-gray-400 transition-colors hover:text-white"
+              >
+                ← 이전
+              </button>
+            )}
+
+            {currentStep < 2 && (
+              <button
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={!canGoNext()}
+                className="flex-1 rounded-xl bg-gradient-to-r from-green-600 to-green-500 py-3 text-sm font-bold text-white shadow-[0_4px_20px_rgba(34,197,94,0.25)] transition-all hover:shadow-[0_4px_28px_rgba(34,197,94,0.35)] disabled:opacity-40 disabled:shadow-none"
+              >
+                다음 단계로 →
+              </button>
+            )}
+
+            {currentStep === 2 && portfolioReady && (
+              <button
+                onClick={handleComplete}
+                disabled={isSubmitting}
+                className="flex-1 rounded-xl bg-gradient-to-r from-green-600 to-green-500 py-3 text-sm font-bold text-white shadow-[0_4px_20px_rgba(34,197,94,0.25)] transition-all hover:shadow-[0_4px_28px_rgba(34,197,94,0.35)] disabled:opacity-50"
+              >
+                {isSubmitting ? '설정 중...' : 'VPULSE 시작하기 →'}
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
+    </SoftAurora>
   )
 }

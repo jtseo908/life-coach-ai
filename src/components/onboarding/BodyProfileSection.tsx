@@ -31,6 +31,9 @@ const ACTIVITY_LEVELS = [
   { value: 'very_active', label: '매우 활발 (매일 고강도 운동)' },
 ] as const
 
+const inputClass =
+  'w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder-gray-600 backdrop-blur-sm transition-colors focus:border-green-500/30 focus:outline-none'
+
 export function BodyProfileSection({ onSave, onSkip }: Props) {
   const [profile, setProfile] = useState<BodyProfile>({})
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -42,16 +45,16 @@ export function BodyProfileSection({ onSave, onSkip }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-bold text-white">신체 정보 (선택)</h2>
-        <p className="text-sm text-gray-400 mt-1">더 정확한 영양/운동 코칭을 위해 입력해주세요. 나중에 수정할 수 있습니다.</p>
+        <h2 className="text-lg font-bold text-white">신체 정보 <span className="text-xs font-normal text-gray-500">(선택)</span></h2>
+        <p className="mt-1 text-xs text-gray-500">더 정확한 영양/운동 코칭을 위해 입력해주세요.</p>
       </div>
 
       {/* 기본 정보 */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-gray-400 mb-1">성별</label>
+          <label className="mb-1 block text-[11px] text-gray-500">성별</label>
           <select
-            className="w-full rounded-lg bg-gray-800 px-3 py-2 text-white text-sm"
+            className={inputClass}
             value={profile.gender || ''}
             onChange={e => update('gender', e.target.value)}
           >
@@ -61,10 +64,10 @@ export function BodyProfileSection({ onSave, onSkip }: Props) {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-400 mb-1">나이</label>
+          <label className="mb-1 block text-[11px] text-gray-500">나이</label>
           <input
             type="number"
-            className="w-full rounded-lg bg-gray-800 px-3 py-2 text-white text-sm"
+            className={inputClass}
             placeholder="30"
             value={profile.age || ''}
             onChange={e => update('age', Number(e.target.value))}
@@ -74,20 +77,20 @@ export function BodyProfileSection({ onSave, onSkip }: Props) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-gray-400 mb-1">키 (cm)</label>
+          <label className="mb-1 block text-[11px] text-gray-500">키 (cm)</label>
           <input
             type="number"
-            className="w-full rounded-lg bg-gray-800 px-3 py-2 text-white text-sm"
+            className={inputClass}
             placeholder="170"
             value={profile.height || ''}
             onChange={e => update('height', Number(e.target.value))}
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-400 mb-1">체중 (kg)</label>
+          <label className="mb-1 block text-[11px] text-gray-500">체중 (kg)</label>
           <input
             type="number"
-            className="w-full rounded-lg bg-gray-800 px-3 py-2 text-white text-sm"
+            className={inputClass}
             placeholder="70"
             value={profile.weight || ''}
             onChange={e => update('weight', Number(e.target.value))}
@@ -97,9 +100,9 @@ export function BodyProfileSection({ onSave, onSkip }: Props) {
 
       {/* 활동 수준 */}
       <div>
-        <label className="block text-xs text-gray-400 mb-1">활동 수준</label>
+        <label className="mb-1 block text-[11px] text-gray-500">활동 수준</label>
         <select
-          className="w-full rounded-lg bg-gray-800 px-3 py-2 text-white text-sm"
+          className={inputClass}
           value={profile.activity_level || ''}
           onChange={e => update('activity_level', e.target.value)}
         >
@@ -110,122 +113,68 @@ export function BodyProfileSection({ onSave, onSkip }: Props) {
         </select>
       </div>
 
-      {/* 인바디 상세 (토글) */}
+      {/* 인바디 상세 토글 */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-xs text-purple-400 hover:text-purple-300"
+        className="text-[11px] text-violet-400 hover:text-violet-300"
       >
         {showAdvanced ? '▲ 인바디 상세 정보 접기' : '▼ 인바디 결과 있으면 입력하기 (선택)'}
       </button>
 
       {showAdvanced && (
-        <div className="space-y-3 rounded-lg bg-gray-800/50 p-3">
+        <div className="space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">골격근량 (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="28.5"
-                value={profile.skeletal_muscle_mass || ''}
-                onChange={e => update('skeletal_muscle_mass', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">골격근량 (kg)</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="28.5" value={profile.skeletal_muscle_mass || ''} onChange={e => update('skeletal_muscle_mass', Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">체지방량 (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="15.0"
-                value={profile.body_fat_mass || ''}
-                onChange={e => update('body_fat_mass', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">체지방량 (kg)</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="15.0" value={profile.body_fat_mass || ''} onChange={e => update('body_fat_mass', Number(e.target.value))} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">체지방률 (%)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="20.5"
-                value={profile.body_fat_pct || ''}
-                onChange={e => update('body_fat_pct', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">체지방률 (%)</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="20.5" value={profile.body_fat_pct || ''} onChange={e => update('body_fat_pct', Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">BMI</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="24.0"
-                value={profile.bmi || ''}
-                onChange={e => update('bmi', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">BMI</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="24.0" value={profile.bmi || ''} onChange={e => update('bmi', Number(e.target.value))} />
             </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">기초대사량 (kcal)</label>
-            <input
-              type="number"
-              className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-              placeholder="1500"
-              value={profile.bmr || ''}
-              onChange={e => update('bmr', Number(e.target.value))}
-            />
+            <label className="mb-1 block text-[11px] text-gray-500">기초대사량 (kcal)</label>
+            <input type="number" className={inputClass} placeholder="1500" value={profile.bmr || ''} onChange={e => update('bmr', Number(e.target.value))} />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">체중조절 (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="-5.0"
-                value={profile.weight_control || ''}
-                onChange={e => update('weight_control', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">체중조절</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="-5.0" value={profile.weight_control || ''} onChange={e => update('weight_control', Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">지방조절 (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="-7.0"
-                value={profile.fat_control || ''}
-                onChange={e => update('fat_control', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">지방조절</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="-7.0" value={profile.fat_control || ''} onChange={e => update('fat_control', Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">근육조절 (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="w-full rounded-lg bg-gray-700 px-3 py-2 text-white text-sm"
-                placeholder="+2.0"
-                value={profile.muscle_control || ''}
-                onChange={e => update('muscle_control', Number(e.target.value))}
-              />
+              <label className="mb-1 block text-[11px] text-gray-500">근육조절</label>
+              <input type="number" step="0.1" className={inputClass} placeholder="+2.0" value={profile.muscle_control || ''} onChange={e => update('muscle_control', Number(e.target.value))} />
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex gap-2">
+      {/* 버튼 */}
+      <div className="flex gap-3">
         <button
           onClick={() => onSave(profile)}
-          className="flex-1 rounded-lg bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+          className="flex-1 rounded-xl bg-gradient-to-r from-green-600 to-green-500 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(34,197,94,0.2)] transition-all hover:shadow-[0_4px_24px_rgba(34,197,94,0.3)]"
         >
           저장
         </button>
         <button
           onClick={onSkip}
-          className="rounded-lg bg-gray-800 px-4 py-2 text-sm text-gray-400 hover:text-white"
+          className="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-gray-400 transition-colors hover:text-white"
         >
           건너뛰기
         </button>

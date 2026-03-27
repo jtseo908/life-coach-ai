@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import GlassCard from '@/components/ui/GlassCard'
+import StatusPill from '@/components/ui/StatusPill'
 import type { ParsedCheckin, DailyLog } from '@/types'
 
 type Props = {
@@ -152,10 +154,10 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
   const dietDetail = parsed?.health?.diet_detail
 
   return (
-    <section className="rounded-xl bg-gray-900 p-4 space-y-3">
+    <GlassCard accentColor="health" className="space-y-3">
       <h2 className="text-lg font-bold text-white">오늘의 데일리 체크인</h2>
       <textarea
-        className="w-full rounded-lg bg-gray-800 px-4 py-3 text-white placeholder-gray-500 min-h-[80px]"
+        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm px-4 py-3 text-white placeholder-gray-500 min-h-[80px] focus:border-green-500/30 focus:outline-none transition-colors"
         placeholder="오늘 하루를 자유롭게 입력하세요... 예: 러닝 5km 40분, 닭가슴살 샐러드, 23시 취침 7시간 수면"
         value={input}
         onChange={e => setInput(e.target.value)}
@@ -163,7 +165,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
 
       {/* 이미지 첨부 */}
       <div className="space-y-2">
-        <label className="inline-flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer">
+        <label className="inline-flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/[0.08] cursor-pointer transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -174,7 +176,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
           <div className="flex flex-wrap gap-2">
             {imagePreviews.map((preview, i) => (
               <div key={i} className="relative group">
-                <img src={preview} alt={`미리보기 ${i + 1}`} className="h-16 w-16 rounded-lg object-cover border border-gray-700" />
+                <img src={preview} alt={`미리보기 ${i + 1}`} className="h-16 w-16 rounded-lg object-cover border border-white/[0.06]" />
                 <button
                   onClick={() => removeImage(i)}
                   className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -191,9 +193,9 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
         <button
           onClick={handleParse}
           disabled={!input.trim() || isLoading}
-          className="w-full rounded-lg bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+          className="w-full rounded-xl border border-violet-400/30 bg-gradient-to-r from-violet-500/20 to-blue-500/20 py-2 text-sm font-semibold text-violet-300 hover:from-violet-500/30 hover:to-blue-500/30 disabled:opacity-50 transition-all"
         >
-          {isLoading ? 'AI 분석 중...' : 'AI로 분석하기'}
+          {isLoading ? 'AI 분석 중...' : '✦ AI로 분석하기'}
         </button>
       )}
 
@@ -202,7 +204,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
       {parsed && (
         <div className="space-y-3">
           {/* 건강 데이터 */}
-          <div className="rounded-lg bg-gray-800 p-3 space-y-2">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
             <div className="text-sm text-green-400 font-semibold">건강 분석</div>
 
             {/* 운동 */}
@@ -210,9 +212,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
               <div className="flex items-center gap-2">
                 <p className="text-sm text-gray-300">운동: {parsed.health.exercise}</p>
                 {exerciseDetail && exerciseDetail.type !== 'none' && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400">
-                    {TYPE_LABELS[exerciseDetail.type]} · {INTENSITY_LABELS[exerciseDetail.intensity]}
-                  </span>
+                  <StatusPill label={`${TYPE_LABELS[exerciseDetail.type]} · ${INTENSITY_LABELS[exerciseDetail.intensity]}`} color="health" />
                 )}
               </div>
               {exerciseDetail?.description && (
@@ -228,13 +228,10 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
               <div className="flex items-center gap-2">
                 <p className="text-sm text-gray-300">식단: {parsed.health.diet}</p>
                 {dietDetail && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${
-                    dietDetail.protein_quality === 'high' ? 'bg-green-900/50 text-green-400' :
-                    dietDetail.protein_quality === 'moderate' ? 'bg-yellow-900/50 text-yellow-400' :
-                    'bg-red-900/50 text-red-400'
-                  }`}>
-                    단백질 {dietDetail.protein_quality === 'high' ? '충분' : dietDetail.protein_quality === 'moderate' ? '보통' : '부족'}
-                  </span>
+                  <StatusPill
+                    label={`단백질 ${dietDetail.protein_quality === 'high' ? '충분' : dietDetail.protein_quality === 'moderate' ? '보통' : '부족'}`}
+                    color={dietDetail.protein_quality === 'high' ? 'health' : dietDetail.protein_quality === 'moderate' ? 'warning' : 'danger'}
+                  />
                 )}
               </div>
               {dietDetail?.description && (
@@ -249,7 +246,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
             <div>
               <p className="text-sm text-gray-300">수면: {parsed.health.sleep}</p>
               {parsed.health.sleep_detail && (
-                <div className="mt-1 pl-2 border-l-2 border-gray-700 space-y-0.5">
+                <div className="mt-1 pl-2 border-l-2 border-white/[0.06] space-y-0.5">
                   {parsed.health.sleep_detail.bedtime && (
                     <p className="text-xs text-gray-400">취침 {parsed.health.sleep_detail.bedtime} → 기상 {parsed.health.sleep_detail.wakeup}</p>
                   )}
@@ -265,35 +262,27 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
             </div>
 
             {/* 총점 */}
-            <div className="pt-1 border-t border-gray-700">
+            <div className="pt-1 border-t border-white/[0.06]">
               <p className="text-sm font-semibold text-green-400">건강 점수: {parsed.health.health_score}/90점</p>
               <p className="text-xs text-gray-500">일관성 보너스(±10)는 코칭 생성 시 반영됩니다</p>
             </div>
 
             {/* 영양 분석 (이미지 첨부 시) */}
             {parsed.health.nutrition_analysis && (
-              <div className="pt-2 border-t border-gray-700">
+              <div className="pt-2 border-t border-white/[0.06]">
                 <div className="text-xs font-semibold text-orange-400 mb-1">영양 분석 (이미지 기반)</div>
                 <div className="flex flex-wrap gap-2 mb-1">
                   {parsed.health.nutrition_analysis.estimated_calories && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-orange-900/30 text-orange-300">
-                      {parsed.health.nutrition_analysis.estimated_calories} kcal
-                    </span>
+                    <StatusPill label={`${parsed.health.nutrition_analysis.estimated_calories} kcal`} color="warning" />
                   )}
                   {parsed.health.nutrition_analysis.protein_grams && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-300">
-                      단백질 {parsed.health.nutrition_analysis.protein_grams}g
-                    </span>
+                    <StatusPill label={`단백질 ${parsed.health.nutrition_analysis.protein_grams}g`} color="wealth" />
                   )}
                   {parsed.health.nutrition_analysis.carbs_grams && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-yellow-900/30 text-yellow-300">
-                      탄수화물 {parsed.health.nutrition_analysis.carbs_grams}g
-                    </span>
+                    <StatusPill label={`탄수화물 ${parsed.health.nutrition_analysis.carbs_grams}g`} color="warning" />
                   )}
                   {parsed.health.nutrition_analysis.fat_grams && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-red-900/30 text-red-300">
-                      지방 {parsed.health.nutrition_analysis.fat_grams}g
-                    </span>
+                    <StatusPill label={`지방 ${parsed.health.nutrition_analysis.fat_grams}g`} color="danger" />
                   )}
                 </div>
                 {parsed.health.nutrition_analysis.detected_foods?.length > 0 && (
@@ -306,7 +295,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
 
           {/* 투자 데이터 */}
           {parsed.finance.trades.length > 0 && (
-            <div className="rounded-lg bg-gray-800 p-3">
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
               <div className="text-sm text-blue-400 font-semibold mb-1">투자</div>
               {parsed.finance.trades.map((t, i) => (
                 <p key={i} className="text-sm text-gray-300">
@@ -319,14 +308,14 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
           <div className="flex gap-2">
             <button
               onClick={() => setParsed(null)}
-              className="rounded-lg bg-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
+              className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm text-gray-300 hover:bg-white/[0.08] transition-colors"
             >
               다시 분석
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 rounded-lg bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-gradient-to-r from-green-600 to-green-500 shadow-[0_4px_16px_rgba(34,197,94,0.2)] py-2 text-sm font-semibold text-white hover:from-green-500 hover:to-green-400 disabled:opacity-50 transition-all"
             >
               {isSaving ? 'AI 코칭 생성 중... (30초~1분 소요)' : '확인하고 저장하기'}
             </button>
@@ -336,7 +325,7 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
 
       {/* 오늘 이미 입력된 데이터 표시 */}
       {!parsed && todayLog && (
-        <div className="rounded-lg bg-gray-800/50 border border-gray-700/50 p-3 space-y-1">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-3 space-y-1">
           <div className="text-xs font-semibold text-gray-400">오늘 입력된 기록</div>
           {todayLog.health_data?.exercise && todayLog.health_data.exercise !== '없음' && (
             <p className="text-xs text-gray-500">운동: {todayLog.health_data.exercise}</p>
@@ -350,6 +339,6 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
           <p className="text-xs text-gray-600">추가 입력하면 기존 데이터와 자동으로 병합됩니다</p>
         </div>
       )}
-    </section>
+    </GlassCard>
   )
 }
