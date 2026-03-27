@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
 import { DailyCheckinSection } from '@/components/dashboard/DailyCheckinSection'
 import { ScoreSection } from '@/components/dashboard/ScoreSection'
 import { CoachingSection } from '@/components/dashboard/CoachingSection'
@@ -30,10 +31,24 @@ export default function DashboardPage() {
     fetchTodayLog()
   }, [router, fetchTodayLog])
 
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <div className="mx-auto max-w-lg px-4 py-6 space-y-4">
-        <h1 className="text-xl font-bold text-center">건강-재무 코치</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">건강-재무 코치</h1>
+          <button
+            onClick={handleLogout}
+            className="text-xs text-gray-500 hover:text-gray-300"
+          >
+            로그아웃
+          </button>
+        </div>
 
         <DailyCheckinSection onCheckinComplete={fetchTodayLog} />
         <ScoreSection todayLog={todayLog} />

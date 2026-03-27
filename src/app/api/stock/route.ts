@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 async function fetchPrice(ticker: string): Promise<number | null> {
-  // DB에 이미 Yahoo Finance 티커 형식으로 저장됨 (005930.KS, TSLA 등)
   const yahooTicker = ticker
 
   try {
     const res = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}?interval=1d&range=1d`,
-      { next: { revalidate: 300 } } // 5분 캐시
+      { next: { revalidate: 300 } }
     )
     const data = await res.json()
     const price = data.chart?.result?.[0]?.meta?.regularMarketPrice
@@ -18,7 +17,6 @@ async function fetchPrice(ticker: string): Promise<number | null> {
   }
 }
 
-// GET: 단일 종목 조회
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const ticker = searchParams.get('ticker')
@@ -31,9 +29,12 @@ export async function GET(request: Request) {
   return NextResponse.json({ ticker, price })
 }
 
-// POST: 전체 포트폴리오 시세 갱신
 export async function POST() {
-  const { data: portfolio } = await supabase.from('portfolio').select('*')
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: portfolio } = await supabase.from('portfolio').select('*').eq('user_id', user.id)
   if (!portfolio?.length) {
     return NextResponse.json({ updated: 0 })
   }
@@ -46,6 +47,7 @@ export async function POST() {
       await supabase
         .from('portfolio')
         .update({ current_price: price, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id)
         .eq('ticker', item.ticker)
 
       return { ticker: item.ticker, price }
