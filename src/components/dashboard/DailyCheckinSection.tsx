@@ -92,6 +92,17 @@ export function DailyCheckinSection({ onCheckinComplete }: Props) {
             <p className="text-sm text-gray-300">운동: {parsed.health.exercise}</p>
             <p className="text-sm text-gray-300">식단: {parsed.health.diet}</p>
             <p className="text-sm text-gray-300">수면: {parsed.health.sleep}</p>
+            {parsed.health.sleep_detail && (
+              <div className="mt-1 pl-2 border-l-2 border-gray-700 space-y-0.5">
+                {parsed.health.sleep_detail.bedtime && (
+                  <p className="text-xs text-gray-400">취침 {parsed.health.sleep_detail.bedtime} → 기상 {parsed.health.sleep_detail.wakeup}</p>
+                )}
+                {parsed.health.sleep_detail.interruptions > 0 && (
+                  <p className="text-xs text-yellow-400">중간 기상 {parsed.health.sleep_detail.interruptions}회</p>
+                )}
+                <p className="text-xs text-gray-400">{parsed.health.sleep_detail.impact}</p>
+              </div>
+            )}
             <p className="text-sm text-green-400 mt-1">점수: {parsed.health.health_score}점</p>
           </div>
 

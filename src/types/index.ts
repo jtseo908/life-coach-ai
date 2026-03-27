@@ -1,7 +1,17 @@
+export type SleepDetail = {
+  duration: string
+  bedtime: string | null
+  wakeup: string | null
+  interruptions: number
+  quality: 'good' | 'fair' | 'poor'
+  impact: string
+}
+
 export type HealthData = {
   exercise: string
   diet: string
   sleep: string
+  sleep_detail?: SleepDetail
   health_score: number
 }
 
