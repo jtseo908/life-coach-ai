@@ -4,6 +4,7 @@ import { useState } from 'react'
 import CountUp from '@/components/ui/CountUp'
 import GlassCard from '@/components/ui/GlassCard'
 import BorderGlow from '@/components/ui/BorderGlow'
+import ShinyText from '@/components/ui/ShinyText'
 import StatusPill from '@/components/ui/StatusPill'
 import type { DailyLog } from '@/types'
 
@@ -172,6 +173,55 @@ export function ScoreSection({ todayLog, yesterdayLog, crossInsightRef }: Props)
   const parsedCross = crossInsight ? parseCrossInsight(crossInsight) : null
 
   const [showResearch, setShowResearch] = useState(false)
+
+  // 체크인 전 와우 빈 상태
+  if (!todayLog) {
+    return (
+      <section className="space-y-4">
+        <BorderGlow color="ai" className="text-center py-8">
+          <p className="text-xs font-medium tracking-widest text-gray-500 uppercase mb-2">
+            VPULSE Score
+          </p>
+          <ShinyText className="text-6xl font-extrabold text-violet-300 lg:text-7xl" speed={4}>
+            ?
+          </ShinyText>
+          <p className="mt-3 text-sm text-gray-400">
+            오늘의 첫 기록을 남기면 점수가 깨어납니다
+          </p>
+        </BorderGlow>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <GlassCard accentColor="health" className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-3">
+              <GlowDot color="#22c55e" />
+              <span className="text-sm font-medium text-gray-300">건강 점수</span>
+            </div>
+            <span className="text-3xl font-bold text-gray-600">--</span>
+            <div className="mt-2 h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-green-500/30"
+                style={{ animation: 'breathing 3s ease-in-out infinite' }}
+              />
+            </div>
+          </GlassCard>
+
+          <GlassCard accentColor="wealth" className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-3">
+              <GlowDot color="#3b82f6" />
+              <span className="text-sm font-medium text-gray-300">재무 점수</span>
+            </div>
+            <span className="text-3xl font-bold text-gray-600">--</span>
+            <div className="mt-2 h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-500/30"
+                style={{ animation: 'breathing 3s ease-in-out infinite 1s' }}
+              />
+            </div>
+          </GlassCard>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="space-y-4">

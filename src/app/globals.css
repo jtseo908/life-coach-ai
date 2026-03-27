@@ -85,6 +85,12 @@ body {
   }
 }
 
+/* 체크인 전 빈 상태 breathing 프로그레스바 */
+@keyframes breathing {
+  0%, 100% { width: 15%; opacity: 0.3; }
+  50% { width: 45%; opacity: 0.6; }
+}
+
 /* 접근성: 모션 감소 설정 존중 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

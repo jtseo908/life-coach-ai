@@ -1,10 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import GlassCard from '@/components/ui/GlassCard'
 import StatusPill from '@/components/ui/StatusPill'
 import type { ParsedCheckin, DailyLog } from '@/types'
+
+// 카테고리 감지 정규식
+const CATEGORY_PATTERNS = {
+  exercise: /러닝|달리기|걷기|산책|웨이트|헬스|수영|자전거|요가|스트레칭|스쿼트|벤치|운동|등산|필라테스|크로스핏|km|조깅|풀업|데드리프트|플랭크/,
+  diet: /아침|점심|저녁|간식|닭가슴살|샐러드|밥|라면|치킨|단백질|채소|과일|계란|연어|고구마|오트밀|식사|먹/,
+  sleep: /수면|취침|기상|잠|시간.*자|자.*시간|\d+시간\s*수면|깨|뒤척|숙면|낮잠/,
+  finance: /매수|매도|주식|ETF|종목|삼성|SK|네이버|카카오|테슬라|애플|TSLA|AAPL|투자|배당|리밸런싱/,
+} as const
+
+const CATEGORY_META = {
+  exercise: { icon: '🏃', label: '운동', guide: '운동 종류, 소요 시간(분), 강도(가볍게/보통/격하게)를 포함하면 더 정확한 분석을 받을 수 있어요' },
+  diet: { icon: '🥗', label: '식단', guide: '단백질원(닭가슴살, 계란 등), 채소, 물 섭취 여부를 쓰면 영양 균형 점수가 올라가요' },
+  sleep: { icon: '😴', label: '수면', guide: '취침 시간, 기상 시간, 총 수면 시간, 중간에 깬 횟수를 포함하면 수면 품질 분석이 가능해요' },
+  finance: { icon: '📈', label: '투자', guide: '종목명, 매수/매도, 수량, 가격을 써보세요 (없으면 생략 가능)' },
+} as const
+
+type CategoryKey = keyof typeof CATEGORY_PATTERNS
 
 type Props = {
   onCheckinComplete: () => void
@@ -34,6 +51,26 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
   const [savingStep, setSavingStep] = useState<'idle' | 'saving' | 'analyzing' | 'coaching' | 'done'>('idle')
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [activeGuide, setActiveGuide] = useState<CategoryKey | null>(null)
+
+  // 카테고리 감지 (실시간)
+  const detected = useMemo(() => ({
+    exercise: CATEGORY_PATTERNS.exercise.test(input),
+    diet: CATEGORY_PATTERNS.diet.test(input),
+    sleep: CATEGORY_PATTERNS.sleep.test(input),
+    finance: CATEGORY_PATTERNS.finance.test(input),
+  }), [input])
+
+  // 가이드 토스트 자동 소멸
+  useEffect(() => {
+    if (!activeGuide) return
+    const timer = setTimeout(() => setActiveGuide(null), 3000)
+    return () => clearTimeout(timer)
+  }, [activeGuide])
+
+  const handleChipTap = useCallback((key: CategoryKey) => {
+    setActiveGuide(prev => prev === key ? null : key)
+  }, [])
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -169,9 +206,52 @@ export function DailyCheckinSection({ onCheckinComplete, todayLog }: Props) {
   return (
     <GlassCard accentColor="health" className="space-y-3">
       <h2 className="text-lg font-bold text-white">오늘의 데일리 체크인</h2>
+
+      {/* 카테고리 힌트 칩 바 */}
+      {!parsed && (
+        <div className="flex flex-wrap gap-1.5">
+          {(Object.keys(CATEGORY_META) as CategoryKey[]).map(key => {
+            const meta = CATEGORY_META[key]
+            const isDetected = detected[key]
+            return (
+              <button
+                key={key}
+                onClick={() => handleChipTap(key)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] border transition-all ${
+                  isDetected
+                    ? 'bg-green-500/[0.08] border-green-500/20 text-green-400'
+                    : 'bg-white/[0.04] border-white/[0.08] text-gray-500'
+                }`}
+              >
+                <span>{meta.icon}</span>
+                <span>{meta.label}</span>
+                {isDetected && <span className="text-green-400 text-[10px]">✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* 가이드 토스트 */}
+      {activeGuide && !parsed && (
+        <div
+          className="flex items-start gap-2 rounded-xl border border-violet-400/20 bg-white/[0.04] p-3 text-xs text-gray-300"
+          style={{ animation: 'slide-in 0.2s ease-out' }}
+        >
+          <span className="shrink-0 text-sm">{CATEGORY_META[activeGuide].icon}</span>
+          <p>{CATEGORY_META[activeGuide].guide}</p>
+          <button
+            onClick={() => setActiveGuide(null)}
+            className="shrink-0 text-gray-600 hover:text-gray-400 transition-colors"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <textarea
         className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl backdrop-blur-sm px-4 py-3 text-white placeholder-gray-500 min-h-[80px] focus:border-green-500/30 focus:outline-none transition-colors"
-        placeholder="오늘 하루를 자유롭게 입력하세요... 예: 러닝 5km 40분, 닭가슴살 샐러드, 23시 취침 7시간 수면"
+        placeholder="오늘의 운동, 식단, 수면, 투자를 자유롭게 적어주세요"
         value={input}
         onChange={e => setInput(e.target.value)}
       />
